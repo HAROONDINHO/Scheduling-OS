@@ -9,6 +9,7 @@ using namespace std;
 
 typedef struct
 {
+    bool running = false;
     char name[10];
     int arrival_time;
     int service_time;
@@ -16,6 +17,7 @@ typedef struct
     int turnaround;
 } process;
 
+bool busy = false;
 char mode[10];
 int policy;
 int instants;
@@ -24,86 +26,69 @@ process *processes = (process*)malloc(sizeof(process)*20);
 
 void load_file()
 {
-    char s[20];
-    int p = 0;
-    printf("enter input filename: ");
-    scanf("%s", s);
-    FILE *f=fopen(s, "r");
-    if (f!= NULL)
-    {
-        fscanf(f, "%s\n", mode);
-        fscanf(f, "%d\n", &policy);
-        fscanf(f, "%d\n", &instants);
-        fscanf(f, "%d\n", &number_of_processes);
-        while(!feof(f))
-        {
-            fscanf(f, "%[^,],", processes[p].name);
-            fscanf(f, "%d", &processes[p].arrival_time);
-            fscanf(f, ",");
-            fscanf(f, "%d", &processes[p].service_time);
-            fscanf(f, "\n");
-            p++;
-        }
-    }
-    else
-    {
-        printf("INPUT FILE NOT FOUND!\n");
-        load_file();
-    }
-}
-
-void load_stdin()
-{
-    printf("enter mode [trace-stats]: ");
-    scanf("%s", mode);
-    printf("\nenter scheduling policy(s) [1:FSCS 2:RR 3:SPN 4:SRT 5:HRRN 6:FB-1 7:FB-2i 8:aging] : ");
-    scanf("%d", &policy);
-    printf("\nenter number of time instants: ");
-    scanf("%d", &instants);
-    printf("\nenter number of processes: ");
-    scanf("%d", &number_of_processes);
+    scanf("%s\n", mode);
+    scanf("%d\n", &policy);
+    scanf("%d\n", &instants);
+    scanf("%d\n", &number_of_processes);
     for(int i=0; i<number_of_processes; i++)
     {
-        printf("\nenter process[%d] name: ", i);
-        scanf("%s", processes[i].name);
-        printf("enter process[%d] arrival time: ", i);
+        scanf("%[^,],", processes[i].name);
         scanf("%d", &processes[i].arrival_time);
-        printf("enter process[%d] service time: ", i);
+        scanf(",");
         scanf("%d", &processes[i].service_time);
     }
 }
 
-void load()
+
+void RR(process* processes)
 {
-    int m;
-    printf("enter 0 to load from file or 1 to manually enter data: ");
-    scanf("%d", &m);
-    if (m==0)
+    queue <process> q;
+    process executing;
+    int time;
+    for (time=0; time<=instants; time++)
     {
-        load_file();
-    }
-    else if(m==1)
-    {
-        load_stdin();
-    }
-    else
-    {
-        printf("WRONG INPUT!\n");
-        load();
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if(time==processes[i].arrival_time)
+            {
+                q.push(processes[i]);
+            }
+        }
+
+        if(!q.empty())
+        {
+            process s = q.front();
+            q.pop();
+            s.running = true;
+            busy=true;
+            executing = s;
+            printf("%s  %d-->%d\n", executing.name, time, time+1);
+            executing.service_time--;
+            if(executing.service_time>0)
+            {
+                q.push(executing);
+            }
+            else
+            {
+                executing.finish_time=time;
+                executing.turnaround=executing.finish_time-executing.arrival_time;
+            }
+        }
     }
 }
 
 void schedule()
 {
     //load processes and modes
-    load();
-
-    //execution
-    for(int i=0; i<number_of_processes; i++)
-    {
-        printf("%s,%d,%d\n", processes[i].name, processes[i].arrival_time, processes[i].service_time);
+    load_file();
+    for(int i=0; i<number_of_processes; i++){
+        printf("%s,  %d,  %d", processes[i].name, processes[i].arrival_time, processes[i].service_time);
     }
+    //execution
+
 }
+
+
 
 
 int main()
