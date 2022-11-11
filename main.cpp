@@ -9,7 +9,7 @@ using namespace std;
 
 typedef struct
 {
-    bool running = false;
+    int *status;
     char name[10];
     int arrival_time;
     int service_time;
@@ -17,7 +17,6 @@ typedef struct
     int turnaround;
 } process;
 
-bool busy = false;
 char mode[10];
 int policy;
 int instants;
@@ -39,6 +38,47 @@ void load_file()
     }
 }
 
+
+void FCFS(process* processes)
+{
+    queue <process> q;
+    bool busy = false;
+    process s;
+    int time=0;
+    while(time<=instants)
+    {
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if (processes[i].arrival_time==time)
+            {
+                q.push(processes[i]);
+            }
+        }
+        if((!busy) && (!q.empty()))
+        {
+            s = q.front();
+            q.pop();
+            busy=true;
+        }
+        if(busy)
+        {
+            if(s.service_time>0)
+            {
+                printf("%s %d->%d\n", s.name, time, time+1);
+                s.service_time--;
+            }
+            if(s.service_time==0)
+            {
+                busy=false;
+                s.finish_time=time+1;
+                s.turnaround=s.finish_time-s.arrival_time;
+            }
+        }
+        time++;
+    }
+}
+
+/*
 
 void RR(process* processes)
 {
@@ -75,17 +115,15 @@ void RR(process* processes)
             }
         }
     }
-}
+}*/
 
 void schedule()
 {
     //load processes and modes
     load_file();
-    for(int i=0; i<number_of_processes; i++){
-        printf("%s,  %d,  %d", processes[i].name, processes[i].arrival_time, processes[i].service_time);
-    }
+    printf("\n\n");
     //execution
-
+    FCFS(processes);
 }
 
 
@@ -93,10 +131,6 @@ void schedule()
 
 int main()
 {
-    while (true)
-    {
-        schedule();
-        printf("\n\n\n");
-    }
+    schedule();
     return 0;
 }
