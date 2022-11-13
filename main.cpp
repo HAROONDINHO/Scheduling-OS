@@ -9,7 +9,7 @@ using namespace std;
 
 typedef struct
 {
-    int *status;
+    char *status;
     char name[10];
     int arrival_time;
     int service_time;
@@ -35,9 +35,57 @@ void load_file()
         scanf("%d", &processes[i].arrival_time);
         scanf(",");
         scanf("%d", &processes[i].service_time);
+
+    }
+    for(int i=0; i<number_of_processes; i++){
+        processes[i].status=(char *)malloc(sizeof (char)* (instants+50));
+            for(int j=0; j<instants; j++){
+            processes[i].status[j]=' ';
+
+    }
+
     }
 }
-
+void stats(process *processes)
+{
+    float meansum=0;
+    printf("FCFS\nProcess    ");
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("|  %d  ",x);
+    }
+    printf("|\nArrival    ");
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("|  %--*d",3,processes[x].arrival_time);
+    }
+    printf("|\nService    ");
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("|  %--*d",3,processes[x].service_time);
+    }
+    printf("| Mean|");
+    printf("\nFinish     ");
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("|  %--*d",3,processes[x].finish_time);
+    }
+    printf("|-----|");
+    printf("\nTurnaround ");
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("|  %--*d",3,processes[x].turnaround);
+        meansum=meansum+processes[x].turnaround;
+    }
+    printf("| %.2f|\nNormTurn   ",(meansum/number_of_processes));
+    meansum=0;
+    for(int x = 0; x<=number_of_processes-1; x++)
+    {
+        printf("| %.2f",((float)processes[x].turnaround/processes[x].service_time));
+        meansum=meansum+(float)processes[x].turnaround/processes[x].service_time;
+    }
+    printf("| %.2f|",(float)(meansum/number_of_processes));
+}
 
 void FCFS(process* processes)
 {
@@ -45,7 +93,7 @@ void FCFS(process* processes)
     bool busy = false;
     process s;
     int time=0;
-    while(time<=instants)
+    while(time<instants)
     {
         for(int i=0; i<number_of_processes; i++)
         {
@@ -67,70 +115,108 @@ void FCFS(process* processes)
                 printf("%s %d->%d\n", s.name, time, time+1);
                 s.service_time--;
             }
-            if(s.service_time==0)
-            {
-                busy=false;
-                s.finish_time=time+1;
-                s.turnaround=s.finish_time-s.arrival_time;
+
+                if(s.service_time==0)
+                {
+
+                    busy=false;
+                    for(int x=0; x<number_of_processes; x++)
+                    {
+                        if (strcmp(processes[x].name,s.name)==0)
+                        {
+                            processes[x];
+                            processes[x].finish_time=time+1;
+                            processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
+                        }
+                    }
+
+                }
             }
+
+            for(int j=0; j<=number_of_processes; j++)
+            {
+                if (strcmp(processes[j].name,s.name)==0)
+                {
+                    processes[j].status[time]='*';
+
+                }
+                else
+                {queue <process> tempq = q;
+                    while(! tempq.empty())
+                    {
+                        process tempb = tempq.front();
+                        tempq.pop();
+                        if (strcmp(tempb.name,processes[j].name)==0)
+                        {
+                            processes[j].status[time]='.';
+
+
+                        }
+
+                    }
+                }
         }
         time++;
+
     }
+            stats(processes);
 }
+    /*
 
-/*
-
-void RR(process* processes)
-{
-    queue <process> q;
-    process executing;
-    int time;
-    for (time=0; time<=instants; time++)
+    void RR(process* processes)
     {
-        for(int i=0; i<number_of_processes; i++)
+        queue <process> q;
+        process executing;
+        int time;
+        for (time=0; time<=instants; time++)
         {
-            if(time==processes[i].arrival_time)
+            for(int i=0; i<number_of_processes; i++)
             {
-                q.push(processes[i]);
+                if(time==processes[i].arrival_time)
+                {
+                    q.push(processes[i]);
+                }
             }
-        }
 
-        if(!q.empty())
-        {
-            process s = q.front();
-            q.pop();
-            s.running = true;
-            busy=true;
-            executing = s;
-            printf("%s  %d-->%d\n", executing.name, time, time+1);
-            executing.service_time--;
-            if(executing.service_time>0)
+            if(!q.empty())
             {
-                q.push(executing);
-            }
-            else
-            {
-                executing.finish_time=time;
-                executing.turnaround=executing.finish_time-executing.arrival_time;
+                process s = q.front();
+                q.pop();
+                s.running = true;
+                busy=true;
+                executing = s;
+                printf("%s  %d-->%d\n", executing.name, time, time+1);
+                executing.service_time--;
+                if(executing.service_time>0)
+                {
+                    q.push(executing);
+                }
+                else
+                {
+                    executing.finish_time=time;
+                    executing.turnaround=executing.finish_time-executing.arrival_time;
+                }
             }
         }
+    }*/
+
+    void schedule()
+    {
+        //load processes and modes
+        load_file();
+        printf("\n\n");
+        //execution
+        FCFS(processes);
     }
-}*/
-
-void schedule()
-{
-    //load processes and modes
-    load_file();
-    printf("\n\n");
-    //execution
-    FCFS(processes);
-}
 
 
 
 
-int main()
-{
-    schedule();
-    return 0;
-}
+    int main()
+    {
+        schedule();
+        for(int x =0;x<number_of_processes;x++){
+            printf("\n%s %s\n ",processes[x].name,processes[x].status);
+        }
+        return 0;
+    }
