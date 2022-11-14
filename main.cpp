@@ -42,17 +42,34 @@ void load_file()
             for(int j=0; j<instants; j++){
             processes[i].status[j]=' ';
 
+
     }
 
     }
 }
-void stats(process *processes)
+void trace(process *processes,char str[])
+{
+    printf("%s  ",str);
+    for(int i = 0;i<=instants;i++){
+        printf("%d ",i%10);
+    }
+    printf("\n------------------------------------------------\n");
+    for(int x =0;x<number_of_processes;x++){
+        printf("%s     |",processes[x].name);
+        for(int j =0;j<instants;j++){
+                printf("%c|",processes[x].status[j]);
+        }
+    }
+        printf("\n------------------------------------------------");
+
+}
+void stats(process *processes,char str[])
 {
     float meansum=0;
-    printf("FCFS\nProcess    ");
+    printf("%s\nProcess    ",str);
     for(int x = 0; x<=number_of_processes-1; x++)
     {
-        printf("|  %d  ",x);
+        printf("|  %s  ",processes[x].name);
     }
     printf("|\nArrival    ");
     for(int x = 0; x<=number_of_processes-1; x++)
@@ -112,7 +129,7 @@ void FCFS(process* processes)
         {
             if(s.service_time>0)
             {
-                printf("%s %d->%d\n", s.name, time, time+1);
+                //printf("%s %d->%d\n", s.name, time, time+1);
                 s.service_time--;
             }
 
@@ -159,7 +176,13 @@ void FCFS(process* processes)
         time++;
 
     }
-            stats(processes);
+            char name[]="FCFS";
+            if (strcmp("Trace",mode)==0){
+                trace(processes,name);
+            }
+            else{
+                stats(processes,name);
+            }
 }
     /*
 
@@ -204,7 +227,6 @@ void FCFS(process* processes)
     {
         //load processes and modes
         load_file();
-        printf("\n\n");
         //execution
         FCFS(processes);
     }
@@ -215,8 +237,5 @@ void FCFS(process* processes)
     int main()
     {
         schedule();
-        for(int x =0;x<number_of_processes;x++){
-            printf("\n%s %s\n ",processes[x].name,processes[x].status);
-        }
         return 0;
     }
