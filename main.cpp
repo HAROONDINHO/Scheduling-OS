@@ -66,10 +66,10 @@ void trace(process *processes,char str[])
 void stats(process *processes,char str[])
 {
     float meansum=0;
-    printf("%s\nProcess    ",str);
-    for(int x = 0; x<=number_of_processes-1; x++)
+    printf("%s\nProcess    |  A  ",str);
+    for(int x = 1; x<=number_of_processes-1; x++)
     {
-        printf("|  %s  ",processes[x].name);
+        printf("|  %c  ",processes[x].name[1]);
     }
     printf("|\nArrival    ");
     for(int x = 0; x<=number_of_processes-1; x++)
@@ -109,6 +109,7 @@ void FCFS(process* processes)
     queue <process> q;
     bool busy = false;
     process s;
+    process dummy;
     int time=0;
     while(time<instants)
     {
@@ -124,6 +125,9 @@ void FCFS(process* processes)
             s = q.front();
             q.pop();
             busy=true;
+        }
+        if((!busy) && (q.empty())){
+            s=dummy;
         }
         if(busy)
         {
@@ -177,7 +181,7 @@ void FCFS(process* processes)
 
     }
             char name[]="FCFS";
-            if (strcmp("Trace",mode)==0){
+            if (strcmp("trace",mode)==0){
                 trace(processes,name);
             }
             else{
