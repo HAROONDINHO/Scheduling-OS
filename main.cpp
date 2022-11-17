@@ -15,25 +15,25 @@ struct process
     int service_time;
     int finish_time;
     int turnaround;
-    bool operator<(const process& s)const{
+    bool operator<(const process& s)const
+    {
         return service_time> s.service_time;
     }
-
-
-
-
 };
 
 char mode[10];
 int policy;
+int RR_qntm;
 int instants;
 int number_of_processes;
 process *processes = (process*)malloc(sizeof(process)*20);
-class myComparator{
-    public:
-        bool operator()(const process& s1,const process& s2){
-            return s1.service_time>s2.service_time;
-        }
+class myComparator
+{
+public:
+    bool operator()(const process& s1,const process& s2)
+    {
+        return s1.service_time>s2.service_time;
+    }
 };
 
 void load_file()
@@ -211,7 +211,111 @@ void FCFS(process* processes)
     }
 }
 
+void RR(process* processes, int qt)
+{
+    queue <process> q;
+    int qntm = qt;
+    process buffer;
+    bool buff = false;
+    bool busy = false;
+    process s;
+    process dummy;
+    int time = 0;
+    int track;
+    while (time <= instants)
+    {
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if(time==processes[i].arrival_time)
+            {
+                q.push(processes[i]);
+            }
+        }
+        if(buff)
+        {
+            q.push(buffer);
+            buff = false;
+        }
+        if((!busy) && (!q.empty()))
+        {
+            s = q.front();
+            q.pop();
+            track = qntm;
+            busy=true;
+        }
+        if((!busy) && (q.empty()))
+        {
+            s=dummy;
+        }
+        if(busy)
+        {
+            if(s.service_time>0 && track>0)
+            {
+                s.service_time--;
+                track--;
+                if(track==0)
+                {
+                    busy = false;
+                }
+            }
+            if(s.service_time>0 && !busy)
+            {
+                buffer = s;
+                buff = true;
+            }
+            if(s.service_time==0)
+            {
 
+                busy=false;
+                for(int x=0; x<number_of_processes; x++)
+                {
+                    if (strcmp(processes[x].name,s.name)==0)
+                    {
+                        processes[x];
+                        processes[x].finish_time=time+1;
+                        processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
+                    }
+                }
+
+            }
+
+        }
+        for(int j=0; j<=number_of_processes; j++)
+        {
+            if (strcmp(processes[j].name,s.name)==0)
+            {
+                processes[j].status[time]='*';
+
+            }
+            else
+            {
+                queue <process> tempq = q;
+                while(! tempq.empty())
+                {
+                    process tempb = tempq.front();
+                    tempq.pop();
+                    if (strcmp(tempb.name,processes[j].name)==0)
+                    {
+                        processes[j].status[time]='.';
+                    }
+                }
+            }
+        }
+        time++;
+    }
+    char name[]="RR-";
+    if (strcmp("trace",mode)==0)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        stats(processes,name);
+    }
+}
+
+
+/*haroon RR
 void RR(process* processes)
 {
     queue <process> q;
@@ -303,10 +407,11 @@ void RR(process* processes)
     {
         stats(processes,name);
     }
-}
+}*/
 
 
-void SPN(process* processes){
+void SPN(process* processes)
+{
     priority_queue<process,vector<process>,myComparator>q ;
     int time = 0;
     process s;
@@ -383,7 +488,8 @@ void SPN(process* processes){
         time++;
 
 
-}    char name[]="SPN";
+    }
+    char name[]="SPN";
     if (strcmp("trace",mode)==0)
     {
         trace(processes,name);
@@ -407,7 +513,7 @@ void schedule()
         FCFS(processes);
         break;
     case 2:
-        RR(processes);
+        RR(processes, 4);
         break;
     case 3 :
         SPN(processes);
@@ -421,6 +527,5 @@ void schedule()
 int main()
 {
     schedule();
-    //SPN(processes);
     return 0;
 }
