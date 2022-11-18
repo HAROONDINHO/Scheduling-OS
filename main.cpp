@@ -10,7 +10,7 @@ using namespace std;
 struct process
 {
     char *status;
-    char name[10];
+    string name;
     int arrival_time;
     int service_time;
     int finish_time;
@@ -21,9 +21,9 @@ struct process
     }
 };
 
-char mode[10];
-int policy;
-int RR_qntm;
+string mode;
+string policy[30];
+int policy_num;
 int instants;
 int number_of_processes;
 process *processes = (process*)malloc(sizeof(process)*20);
@@ -38,33 +38,54 @@ public:
 
 void load_file()
 {
-    scanf("%s\n", mode);
-    scanf("%d\n", &policy);
-    scanf("%d\n", &instants);
-    scanf("%d\n", &number_of_processes);
+    string temp;
+    cin >> mode;
+    cin >> temp;
+    stringstream ss0(temp);
+    string word;
+    while (!ss0.eof())
+    {
+        getline(ss0, word, ',');
+        policy[policy_num++] = word;
+    }
+    cin >> instants;
+    cin >> number_of_processes;
     for(int i=0; i<number_of_processes; i++)
     {
-        scanf("%[^,],", processes[i].name);
-        scanf("%d", &processes[i].arrival_time);
-        scanf(",");
-        scanf("%d", &processes[i].service_time);
-
+        string temp;
+        cin >> temp;
+        stringstream ss1(temp);
+        string word;
+        string words[3];
+        int j = 0;
+        while (!ss1.eof())
+        {
+            getline(ss1, word, ',');
+            words[j++] = word;
+        }
+        processes[i].name = words[0];
+        stringstream ss2(words[1]);
+        ss2 >> processes[i].arrival_time;
+        stringstream ss3(words[2]);
+        ss3 >> processes[i].service_time;
     }
+}
+
+void trace_init()
+{
     for(int i=0; i<number_of_processes; i++)
     {
         processes[i].status=(char *)malloc(sizeof (char)* (instants+50));
         for(int j=0; j<instants; j++)
         {
             processes[i].status[j]=' ';
-
-
         }
-
     }
 }
-void trace(process *processes,char str[])
+
+void trace(process *processes,string str)
 {
-    printf("%-4s  ",str);
+    printf("%-4s  ",str.c_str());
     for(int i = 0; i<=instants; i++)
     {
         printf("%d ",i%10);
@@ -72,22 +93,26 @@ void trace(process *processes,char str[])
     printf("\n------------------------------------------------\n");
     for(int x =0; x<number_of_processes; x++)
     {
-        printf("%s     |",processes[x].name);
+        printf("%s     |",processes[x].name.c_str());
         for(int j =0; j<instants; j++)
         {
             printf("%c|",processes[x].status[j]);
+        }
+        if(x!=number_of_processes-1)
+        {
+            printf("\n");
         }
     }
     printf("\n------------------------------------------------");
 
 }
-void stats(process *processes,char str[])
+void stats(process *processes,string str)
 {
     float meansum=0;
-    printf("%s\nProcess    |  A  ",str);
-    for(int x = 1; x<=number_of_processes-1; x++)
+    printf("%s\nProcess    ",str.c_str());
+    for(int x = 0; x<=number_of_processes-1; x++)
     {
-        printf("|  %c  ",processes[x].name[1]);
+        printf("|  %s  ",processes[x].name.c_str());
     }
     printf("|\nArrival    ");
     for(int x = 0; x<=number_of_processes-1; x++)
@@ -112,14 +137,14 @@ void stats(process *processes,char str[])
         printf("| %2d  ",processes[x].turnaround);
         meansum=meansum+processes[x].turnaround;
     }
-    printf("|%5.2f|\nNormTurn   ",(meansum/number_of_processes));
+    printf("| %2.2f|\nNormTurn   ",(meansum/number_of_processes));
     meansum=0;
     for(int x = 0; x<=number_of_processes-1; x++)
     {
-        printf("|%5.2f",((float)processes[x].turnaround/processes[x].service_time));
+        printf("| %2.2f",((float)processes[x].turnaround/processes[x].service_time));
         meansum=meansum+(float)processes[x].turnaround/processes[x].service_time;
     }
-    printf("|%5.2f|",(float)(meansum/number_of_processes));
+    printf("| %2.2f|",(float)(meansum/number_of_processes));
 }
 
 void FCFS(process* processes)
@@ -162,7 +187,7 @@ void FCFS(process* processes)
                 busy=false;
                 for(int x=0; x<number_of_processes; x++)
                 {
-                    if (strcmp(processes[x].name,s.name)==0)
+                    if (processes[x].name==s.name)
                     {
                         processes[x];
                         processes[x].finish_time=time+1;
@@ -173,9 +198,9 @@ void FCFS(process* processes)
             }
         }
 
-        for(int j=0; j<=number_of_processes; j++)
+        for(int j=0; j<number_of_processes; j++)
         {
-            if (strcmp(processes[j].name,s.name)==0)
+            if (processes[j].name==s.name)
             {
                 processes[j].status[time]='*';
 
@@ -187,11 +212,9 @@ void FCFS(process* processes)
                 {
                     process tempb = tempq.front();
                     tempq.pop();
-                    if (strcmp(tempb.name,processes[j].name)==0)
+                    if (tempb.name==processes[j].name)
                     {
                         processes[j].status[time]='.';
-
-
                     }
 
                 }
@@ -200,8 +223,8 @@ void FCFS(process* processes)
         time++;
 
     }
-    char name[]="FCFS";
-    if (strcmp("trace",mode)==0)
+    string name="FCFS";
+    if ("trace"==mode)
     {
         trace(processes,name);
     }
@@ -269,23 +292,20 @@ void RR(process* processes, int qt)
                 busy=false;
                 for(int x=0; x<number_of_processes; x++)
                 {
-                    if (strcmp(processes[x].name,s.name)==0)
+                    if (processes[x].name==s.name)
                     {
                         processes[x];
                         processes[x].finish_time=time+1;
                         processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
                     }
                 }
-
             }
-
         }
-        for(int j=0; j<=number_of_processes; j++)
+        for(int j=0; j<number_of_processes; j++)
         {
-            if (strcmp(processes[j].name,s.name)==0)
+            if (processes[j].name==s.name)
             {
                 processes[j].status[time]='*';
-
             }
             else
             {
@@ -294,7 +314,7 @@ void RR(process* processes, int qt)
                 {
                     process tempb = tempq.front();
                     tempq.pop();
-                    if (strcmp(tempb.name,processes[j].name)==0)
+                    if (tempb.name==processes[j].name)
                     {
                         processes[j].status[time]='.';
                     }
@@ -303,8 +323,9 @@ void RR(process* processes, int qt)
         }
         time++;
     }
-    char name[]="RR-";
-    if (strcmp("trace",mode)==0)
+
+    string name = "RR-";
+    if ("trace"==mode)
     {
         trace(processes,name);
     }
@@ -313,102 +334,6 @@ void RR(process* processes, int qt)
         stats(processes,name);
     }
 }
-
-
-/*haroon RR
-void RR(process* processes)
-{
-    queue <process> q;
-    process executing;
-    process buffer;
-    process dummy;
-    dummy.name[0]='.';
-    bool busy = false;
-    int time=0;
-    int qt=4;
-    buffer=dummy;
-    while(time<=instants)
-    {
-
-        for(int i=0; i<number_of_processes; i++)
-        {
-            if(time==processes[i].arrival_time)
-            {
-                q.push(processes[i]);
-            }
-        }
-        if(strcmp(dummy.name,buffer.name)!=0)
-        {
-            q.push(buffer);
-        }
-
-        if(!q.empty())
-        {
-            process s = q.front();
-            q.pop();
-            busy=true;
-            executing = s;
-            for(int x = 0; x<number_of_processes; x++)
-            {
-                if(strcmp(processes[x].name,executing.name)==0)
-                {
-                    for(int p=0; p<qt; p++)
-                    {
-                        processes[x].status[time+p]='*';
-                        executing.service_time=executing.service_time-qt;
-
-                    if(executing.service_time>0)
-                    {
-                        buffer=executing;
-
-                    }
-                    else
-                    {
-                        buffer=dummy;
-                        executing.finish_time=time+p;
-                        processes[x].finish_time=time+p;
-                        executing.turnaround=executing.finish_time-executing.arrival_time;
-                        processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
-                    }
-                    }
-                }
-                queue <process> tempq = q;
-
-                while(! tempq.empty())
-                {
-                    process tempb = tempq.front();
-                    tempq.pop();
-                    for(int k=0; k<number_of_processes; k++)
-                    {
-                        if ((strcmp(tempb.name,processes[k].name)==0)&&((strcmp(tempb.name,executing.name)!=0)))
-                        {
-                            processes[k].status[time]='.';
-
-
-                        }
-                    }
-
-                }
-
-            }
-
-        }
-        time++;
-    }
-
-
-
-    char name[]="RR";
-    if (strcmp("trace",mode)==0)
-    {
-        trace(processes,name);
-    }
-    else
-    {
-        stats(processes,name);
-    }
-}*/
-
 
 void SPN(process* processes)
 {
@@ -450,7 +375,7 @@ void SPN(process* processes)
                 busy=false;
                 for(int x=0; x<number_of_processes; x++)
                 {
-                    if (strcmp(processes[x].name,s.name)==0)
+                    if (processes[x].name==s.name)
                     {
                         processes[x];
                         processes[x].finish_time=time+1;
@@ -461,12 +386,11 @@ void SPN(process* processes)
             }
         }
 
-        for(int j=0; j<=number_of_processes; j++)
+        for(int j=0; j<number_of_processes; j++)
         {
-            if (strcmp(processes[j].name,s.name)==0)
+            if (processes[j].name==s.name)
             {
                 processes[j].status[time]='*';
-
             }
             else
             {
@@ -475,22 +399,17 @@ void SPN(process* processes)
                 {
                     process tempb = tempq.top();
                     tempq.pop();
-                    if (strcmp(tempb.name,processes[j].name)==0)
+                    if (tempb.name==processes[j].name)
                     {
                         processes[j].status[time]='.';
-
-
                     }
-
                 }
             }
         }
         time++;
-
-
     }
-    char name[]="SPN";
-    if (strcmp("trace",mode)==0)
+    string name="SPN";
+    if ("trace"==mode)
     {
         trace(processes,name);
     }
@@ -506,18 +425,60 @@ void schedule()
     //load processes and modes
     load_file();
     //execution
-
-    switch(policy)
+    for(int i=0; i<policy_num; i++)
     {
-    case 1:
-        FCFS(processes);
-        break;
-    case 2:
-        RR(processes, 4);
-        break;
-    case 3 :
-        SPN(processes);
-        break;
+        trace_init();
+        int x;
+        int qntm;
+        if (policy[i].find('-') != std::string::npos)
+        {
+            stringstream ss(policy[i]);
+            string word;
+            string words[2];
+            int j = 0;
+            while (!ss.eof())
+            {
+                getline(ss, word, '-');
+                words[j++] = word;
+            }
+            stringstream toint(words[0]);
+            toint >> x;
+            stringstream toint2(words[1]);
+            toint2 >> qntm;
+        }
+
+
+        stringstream ss(policy[i]);
+        ss >> x;
+        switch (x)
+        {
+        case 1:
+            FCFS(processes);
+            break;
+        case 2:
+            RR(processes, qntm);
+            break;
+        case 3:
+            SPN(processes);
+            break;
+        case 4:
+            cout <<"srt"<<endl;
+            break;
+        case 5:
+            cout <<"hrrn"<<endl;
+            break;
+        case 6:
+            cout <<"fb1"<<endl;
+            break;
+        case 7:
+            cout <<"fb2"<<endl;
+            break;
+        case 8:
+            cout <<"aging"<<endl;
+            break;
+        }
+
+        printf("\n\n");
     }
 }
 
