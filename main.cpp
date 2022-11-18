@@ -112,14 +112,14 @@ void stats(process *processes,char str[])
         printf("| %2d  ",processes[x].turnaround);
         meansum=meansum+processes[x].turnaround;
     }
-    printf("| %2.2f|\nNormTurn   ",(meansum/number_of_processes));
+    printf("|%5.2f|\nNormTurn   ",(meansum/number_of_processes));
     meansum=0;
     for(int x = 0; x<=number_of_processes-1; x++)
     {
-        printf("| %2.2f",((float)processes[x].turnaround/processes[x].service_time));
+        printf("|%5.2f",((float)processes[x].turnaround/processes[x].service_time));
         meansum=meansum+(float)processes[x].turnaround/processes[x].service_time;
     }
-    printf("| %2.2f|",(float)(meansum/number_of_processes));
+    printf("|%5.2f|",(float)(meansum/number_of_processes));
 }
 
 void FCFS(process* processes)
