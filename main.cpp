@@ -325,7 +325,9 @@ void RR(process* processes, int qt)
     }
 
     string name9 = "RR-";
-    string name = name9 + qt;
+    std::string qts;
+    qts = std::to_string(qntm);
+    string name = name9 + qts;
     if ("trace"==mode)
     {
         trace(processes,name);
