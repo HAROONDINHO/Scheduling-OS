@@ -337,6 +337,106 @@ void RR(process* processes, int qt)
         stats(processes,name);
     }
 }
+void SRT(process* processes)
+{
+    priority_queue<process,vector<process>,myComparator>q;
+    int qntm = 1;
+    process buffer;
+    bool buff = false;
+    bool busy = false;
+    process s;
+    process dummy;
+    int time = 0;
+    int track;
+    while (time <= instants)
+    {
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if(time==processes[i].arrival_time)
+            {
+                q.push(processes[i]);
+            }
+        }
+        if(buff)
+        {
+            q.push(buffer);
+            buff = false;
+        }
+        if((!busy) && (!q.empty()))
+        {
+            s = q.top();
+            q.pop();
+            track = qntm;
+            busy=true;
+        }
+        if((!busy) && (q.empty()))
+        {
+            s=dummy;
+        }
+        if(busy)
+        {
+            if(s.service_time>0 && track>0)
+            {
+                s.service_time--;
+                track--;
+                if(track==0)
+                {
+                    busy = false;
+                }
+            }
+            if(s.service_time>0 && !busy)
+            {
+                buffer = s;
+                buff = true;
+            }
+            if(s.service_time==0)
+            {
+
+                busy=false;
+                for(int x=0; x<number_of_processes; x++)
+                {
+                    if (processes[x].name==s.name)
+                    {
+                        processes[x];
+                        processes[x].finish_time=time+1;
+                        processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
+                    }
+                }
+            }
+        }
+        for(int j=0; j<number_of_processes; j++)
+        {
+            if (processes[j].name==s.name)
+            {
+                processes[j].status[time]='*';
+            }
+            else
+            {
+                priority_queue<process,vector<process>,myComparator> tempq = q;
+                while(! tempq.empty())
+                {
+                    process tempb = tempq.top();
+                    tempq.pop();
+                    if (tempb.name==processes[j].name)
+                    {
+                        processes[j].status[time]='.';
+                    }
+                }
+            }
+        }
+        time++;
+    }
+
+    string name = "SRT";
+    if ("trace"==mode)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        stats(processes,name);
+    }
+}
 
 void SPN(process* processes)
 {
@@ -465,7 +565,7 @@ void schedule()
             SPN(processes);
             break;
         case 4:
-            cout <<"srt"<<endl;
+            SRT(processes);
             break;
         case 5:
             cout <<"hrrn"<<endl;
