@@ -15,10 +15,13 @@ struct process
     int service_time;
     int finish_time;
     int turnaround;
+    float wait_time=0;
+    float response_rate;
     bool operator<(const process& s)const
     {
         return service_time> s.service_time;
     }
+
 };
 
 string mode;
@@ -32,8 +35,18 @@ class myComparator
 public:
     bool operator()(const process& s1,const process& s2)
     {
-        return s1.service_time>s2.service_time;
+        return s1.service_time<s2.service_time;
     }
+
+};
+class myComparator2
+{
+public:
+    bool operator()(const process& s1,const process& s2)
+    {
+        return s1.response_rate<s2.response_rate;
+    }
+
 };
 
 void load_file()
@@ -522,6 +535,105 @@ void SPN(process* processes)
     }
 }
 
+void HRRN(process* processes)
+{
+    priority_queue<process,vector<process>,myComparator2>q ;
+    priority_queue<process,vector<process>,myComparator2>buffer ;
+    priority_queue<process,vector<process>,myComparator2>dummy2 ;
+    int time = 0;
+    float time2 = 0;
+    process s;
+    process dummy;
+    bool busy=false;
+    while(time<instants)
+    {buffer=dummy2;
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if (processes[i].arrival_time==time)
+
+            {
+
+                q.push(processes[i]);
+
+            }
+        }
+        if((!busy) && (!q.empty()))
+        {
+            s = q.top();
+            q.pop();
+            busy=true;
+        }
+        if((!busy) && (q.empty()))
+        {
+            s=dummy;
+        }
+        if(busy)
+        {
+            if(s.service_time>0)
+            {
+                //printf("%s %d->%d\n", s.name, time, time+1);
+                s.service_time--;
+            }
+
+            if(s.service_time==0)
+            {
+
+                busy=false;
+                for(int x=0; x<number_of_processes; x++)
+                {
+                    if (processes[x].name==s.name)
+                    {
+                        processes[x];
+                        processes[x].finish_time=time+1;
+                        processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
+                    }
+                }
+
+            }
+        }
+
+        for(int j=0; j<number_of_processes; j++)
+        {
+            if (processes[j].name==s.name)
+            {
+                processes[j].status[time]='*';
+            }
+            else
+            {
+                priority_queue<process,vector<process>,myComparator2>tempq = q;
+                while(! tempq.empty())
+                {
+                    process tempb = tempq.top();
+                    tempq.pop();
+                    if (tempb.name==processes[j].name)
+                    {
+                        processes[j].status[time]='.';
+                        processes[j].wait_time=(time2-processes[j].arrival_time);
+                        processes[j].response_rate=((processes[j].wait_time+processes[j].service_time)/processes[j].service_time);
+                        buffer.push(processes[j]);
+
+
+
+                    }
+                }
+            }
+        }
+        time++;
+        time2++;
+        q=buffer;
+    }
+    string name="HRRN";
+    if ("trace"==mode)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        stats(processes,name);
+    }
+
+}
+
 
 void schedule()
 {
@@ -568,7 +680,7 @@ void schedule()
             SRT(processes);
             break;
         case 5:
-            cout <<"hrrn"<<endl;
+            HRRN(processes);
             break;
         case 6:
             cout <<"fb1"<<endl;
