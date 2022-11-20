@@ -103,7 +103,12 @@ void trace(process *processes,string str)
     {
         printf("%d ",i%10);
     }
-    printf("\n------------------------------------------------\n");
+    printf("\n");
+    for(int f=0; f<(48+(instants-20)*2); f++)
+    {
+        printf("-");
+    }
+    printf("\n");
     for(int x =0; x<number_of_processes; x++)
     {
         printf("%s     |",processes[x].name.c_str());
@@ -116,7 +121,12 @@ void trace(process *processes,string str)
             printf("\n");
         }
     }
-    printf("\n------------------------------------------------");
+    printf("\n");
+    for(int f=0; f<(48+(instants-20)*2); f++)
+    {
+        printf("-");
+    }
+    printf("\n");
 
 }
 void stats(process *processes,string str)
