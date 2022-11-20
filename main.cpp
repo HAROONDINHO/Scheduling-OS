@@ -104,7 +104,7 @@ void trace(process *processes,string str)
         printf("%d ",i%10);
     }
     printf("\n");
-    for(int f=0; f<(48+(instants-20)*2); f++)
+    for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
@@ -122,14 +122,14 @@ void trace(process *processes,string str)
         }
     }
     printf("\n");
-    for(int f=0; f<(48+(instants-20)*2); f++)
+    for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
     printf("\n");
-
 }
-void stats(process *processes,string str)
+
+void status(process *processes,string str)
 {
     float meansum=0;
     printf("%s\nProcess    ",str.c_str());
@@ -253,7 +253,7 @@ void FCFS(process* processes)
     }
     else
     {
-        stats(processes,name);
+        status(processes,name);
     }
 }
 
@@ -357,7 +357,7 @@ void RR(process* processes, int qt)
     }
     else
     {
-        stats(processes,name);
+        status(processes,name);
     }
 }
 void SRT(process* processes)
@@ -457,7 +457,7 @@ void SRT(process* processes)
     }
     else
     {
-        stats(processes,name);
+        status(processes,name);
     }
 }
 
@@ -541,7 +541,7 @@ void SPN(process* processes)
     }
     else
     {
-        stats(processes,name);
+        status(processes,name);
     }
 }
 
@@ -639,7 +639,7 @@ void HRRN(process* processes)
     }
     else
     {
-        stats(processes,name);
+        status(processes,name);
     }
 
 }
