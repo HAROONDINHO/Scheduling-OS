@@ -1000,7 +1000,7 @@ void schedule()
             break;
         }
 
-        printf("\n\n");
+        printf("\n");
     }
 }
 
