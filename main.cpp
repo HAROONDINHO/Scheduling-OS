@@ -17,6 +17,8 @@ struct process
     int turnaround;
     float wait_time=0;
     float response_rate;
+    int age_priority=service_time;
+    int origin_priority=service_time;
     bool operator<(const process& s)const
     {
         return service_time> s.service_time;
@@ -45,6 +47,15 @@ public:
     bool operator()(const process& s1,const process& s2)
     {
         return s1.response_rate<s2.response_rate;
+    }
+
+};
+class myComparator3
+{
+public:
+    bool operator()(const process& s1,const process& s2)
+    {
+        return s1.age_priority<s2.age_priority;
     }
 
 };
@@ -98,17 +109,17 @@ void trace_init()
 
 void trace(process *processes,string str)
 {
-    printf("%-4s  ",str.c_str());
+    printf("%-5s",str.c_str());
     for(int i = 0; i<=instants; i++)
     {
-        printf("%d ",i%10);
+        printf("%2d",i%10);
     }
-    printf("\n");
+    printf(" \n");
     for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
-    printf("\n");
+    printf(" \n");
     for(int x =0; x<number_of_processes; x++)
     {
         printf("%s     |",processes[x].name.c_str());
@@ -118,15 +129,15 @@ void trace(process *processes,string str)
         }
         if(x!=number_of_processes-1)
         {
-            printf("\n");
+            printf(" \n");
         }
     }
-    printf("\n");
+    printf(" \n");
     for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
-    printf("\n");
+    printf(" \n");
 }
 
 void status(process *processes,string str)
@@ -643,6 +654,97 @@ void HRRN(process* processes)
     }
 
 }
+void aging(process *processes,int qt){
+    priority_queue<process,vector<process>,myComparator3>q ;
+    priority_queue<process,vector<process>,myComparator3>buffer2 ;
+    priority_queue<process,vector<process>,myComparator3>dummy2 ;
+    int qntm = qt;
+    process buffer;
+    bool buff = false;
+    bool busy = false;
+    process s;
+    process dummy;
+    int time = 0;
+    int track;
+    while (time <= instants)
+    {buffer2 = dummy2;
+            if(buff)
+        {
+            q.push(buffer);
+            buff = false;
+        }
+        for(int i=0; i<number_of_processes; i++)
+        {
+            if(time==processes[i].arrival_time)
+            {
+                q.push(processes[i]);
+            }
+        }
+
+        if((!busy) && (!q.empty()))
+        {
+            s = q.top();
+            s.age_priority=s.origin_priority;
+            q.pop();
+            track = qntm;
+            busy=true;
+        }
+        if((!busy) && (q.empty()))
+        {
+            s=dummy;
+        }
+        if(busy)
+        {
+            if( track>0)
+            {
+                track--;
+                if(track==0)
+                {
+                    busy = false;
+                }
+            }
+            if(!busy)
+            {
+                buffer = s;
+                buff = true;
+            }
+
+        }
+        for(int j=0; j<number_of_processes; j++)
+        {
+            if (processes[j].name==s.name)
+            {
+                processes[j].status[time]='*';
+            }
+            else
+            {
+                priority_queue<process,vector<process>,myComparator3> tempq = q;
+                while(! tempq.empty())
+                {
+                    process tempb = tempq.top();
+                    tempq.pop();
+                    if (tempb.name==processes[j].name)
+                    {
+                        processes[j].status[time]='.';
+                        processes[j].age_priority++;
+                        buffer2.push(processes[j]);
+                    }
+                }
+            }
+        }
+        time++;
+    q=buffer2;
+    }
+    string name = "Aging";
+    if ("trace"==mode)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        status(processes,name);
+    }
+}
 
 
 void schedule()
@@ -699,7 +801,7 @@ void schedule()
             cout <<"fb2"<<endl;
             break;
         case 8:
-            cout <<"aging"<<endl;
+            aging(processes,qntm);
             break;
         }
 
