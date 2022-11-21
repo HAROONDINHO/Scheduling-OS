@@ -17,8 +17,7 @@ struct process
     int turnaround;
     float wait_time=0;
     float response_rate;
-    int age_priority=service_time;
-    int origin_priority=service_time;
+    int FBpriority = 0;
     bool operator<(const process& s)const
     {
         return service_time> s.service_time;
@@ -47,15 +46,6 @@ public:
     bool operator()(const process& s1,const process& s2)
     {
         return s1.response_rate<s2.response_rate;
-    }
-
-};
-class myComparator3
-{
-public:
-    bool operator()(const process& s1,const process& s2)
-    {
-        return s1.age_priority<s2.age_priority;
     }
 
 };
@@ -109,17 +99,17 @@ void trace_init()
 
 void trace(process *processes,string str)
 {
-    printf("%-5s",str.c_str());
+    printf("%-4s  ",str.c_str());
     for(int i = 0; i<=instants; i++)
     {
-        printf("%2d",i%10);
+        printf("%d ",i%10);
     }
-    printf(" \n");
+    printf("\n");
     for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
-    printf(" \n");
+    printf("\n");
     for(int x =0; x<number_of_processes; x++)
     {
         printf("%s     |",processes[x].name.c_str());
@@ -129,15 +119,15 @@ void trace(process *processes,string str)
         }
         if(x!=number_of_processes-1)
         {
-            printf(" \n");
+            printf("\n");
         }
     }
-    printf(" \n");
+    printf("\n");
     for(int f=0; f<(8+(instants)*2); f++)
     {
         printf("-");
     }
-    printf(" \n");
+    printf("\n");
 }
 
 void status(process *processes,string str)
@@ -371,6 +361,8 @@ void RR(process* processes, int qt)
         status(processes,name);
     }
 }
+
+
 void SRT(process* processes)
 {
     priority_queue<process,vector<process>,myComparator>q;
@@ -567,7 +559,8 @@ void HRRN(process* processes)
     process dummy;
     bool busy=false;
     while(time<instants)
-    {buffer=dummy2;
+    {
+        buffer=dummy2;
         for(int i=0; i<number_of_processes; i++)
         {
             if (processes[i].arrival_time==time)
@@ -654,11 +647,11 @@ void HRRN(process* processes)
     }
 
 }
-void aging(process *processes,int qt){
-    priority_queue<process,vector<process>,myComparator3>q ;
-    priority_queue<process,vector<process>,myComparator3>buffer2 ;
-    priority_queue<process,vector<process>,myComparator3>dummy2 ;
-    int qntm = qt;
+
+/*void FB_1(process* processes)
+{
+    queue <process> qs[4];
+    queue <process> readys;
     process buffer;
     bool buff = false;
     bool busy = false;
@@ -666,49 +659,93 @@ void aging(process *processes,int qt){
     process dummy;
     int time = 0;
     int track;
-    while (time <= instants)
-    {buffer2 = dummy2;
-            if(buff)
-        {
-            q.push(buffer);
-            buff = false;
-        }
+    while (time < instants)
+    {
         for(int i=0; i<number_of_processes; i++)
         {
             if(time==processes[i].arrival_time)
             {
-                q.push(processes[i]);
+                qs[0].push(processes[i]);
+                readys.push(processes[i]);
             }
         }
-
-        if((!busy) && (!q.empty()))
+        if(buff)
         {
-            s = q.top();
-            s.age_priority=s.origin_priority;
-            q.pop();
-            track = qntm;
-            busy=true;
+            if(readys.empty())
+            {
+                s = buffer;
+                track = 1;
+                busy = true;
+                buff = false;
+            }
+            else
+            {
+                qs[buffer.FBpriority].push(buffer);
+                readys.push(buffer);
+                buff = false;
+            }
         }
-        if((!busy) && (q.empty()))
+        if((!busy))
         {
-            s=dummy;
+            for(int i=0; i<4; i++)
+            {
+                if(!qs[i].empty())
+                {
+                    s = qs[i].front();
+                    s.FBpriority+=1;
+                    qs[i].pop();
+                    readys.pop();
+                    track = 1;
+                    busy=true;
+                }
+            }
+        }
+        if((!busy))
+        {
+            bool allempty = true;
+            for(int i=0; i<4; i++)
+            {
+                if(!qs[i].empty())
+                {
+                    allempty = false;
+                    break;
+                }
+            }
+            if(allempty)
+            {
+                s = dummy;
+            }
         }
         if(busy)
         {
-            if( track>0)
+            if(s.service_time>0 && track>0)
             {
+                s.service_time--;
                 track--;
                 if(track==0)
                 {
                     busy = false;
                 }
             }
-            if(!busy)
+            if(s.service_time>0 && !busy)
             {
                 buffer = s;
                 buff = true;
             }
+            if(s.service_time==0)
+            {
 
+                busy=false;
+                for(int x=0; x<number_of_processes; x++)
+                {
+                    if (processes[x].name==s.name)
+                    {
+                        processes[x];
+                        processes[x].finish_time=time+1;
+                        processes[x].turnaround=processes[x].finish_time-processes[x].arrival_time;
+                    }
+                }
+            }
         }
         for(int j=0; j<number_of_processes; j++)
         {
@@ -718,24 +755,182 @@ void aging(process *processes,int qt){
             }
             else
             {
-                priority_queue<process,vector<process>,myComparator3> tempq = q;
-                while(! tempq.empty())
+                for(int k=0; k<4; k++)
                 {
-                    process tempb = tempq.top();
-                    tempq.pop();
-                    if (tempb.name==processes[j].name)
+                    queue <process> tempq = qs[k];
+                    while(! tempq.empty())
                     {
-                        processes[j].status[time]='.';
-                        processes[j].age_priority++;
-                        buffer2.push(processes[j]);
+                        process tempb = tempq.front();
+                        tempq.pop();
+                        if (tempb.name==processes[j].name)
+                        {
+                            processes[j].status[time]='.';
+                        }
                     }
                 }
+
+
             }
         }
         time++;
-    q=buffer2;
     }
-    string name = "Aging";
+
+    string name = "FB-1";
+    if ("trace"==mode)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        status(processes,name);
+    }
+}*/
+
+
+
+void FB_1(process *processes)
+{
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> q; //pair of priority level and process index
+    unordered_map<int,int>remainingServiceTime; //map from process index to the remaining service time
+    int j=0;
+    if(processes[0].arrival_time == 0)
+    {
+        q.push(make_pair(0,j));
+        remainingServiceTime[j]=processes[j].service_time;
+        j++;
+    }
+    for(int time =0; time<instants; time++)
+    {
+        if(!q.empty())
+        {
+            int priorityLevel = q.top().first;
+            int processIndex =q.top().second;
+            int arrivalTime = processes[processIndex].arrival_time;
+            int serviceTime = processes[processIndex].service_time;
+            q.pop();
+            while(j<number_of_processes && processes[j].arrival_time==time+1)
+            {
+                q.push(make_pair(0,j));
+                remainingServiceTime[j]=processes[j].service_time;
+                j++;
+            }
+            remainingServiceTime[processIndex]--;
+            processes[processIndex].status[time]='*';
+            if(remainingServiceTime[processIndex]==0)
+            {
+                processes[processIndex].finish_time=time+1;
+                processes[processIndex].turnaround = (processes[processIndex].finish_time - arrivalTime);
+            }
+            else
+            {
+                if(q.size()>=1)
+                    q.push(make_pair(priorityLevel+1,processIndex));
+                else
+                    q.push(make_pair(priorityLevel,processIndex));
+            }
+        }
+        while(j<number_of_processes && processes[j].arrival_time==time+1)
+        {
+            q.push(make_pair(0,j));
+            remainingServiceTime[j]=processes[j].service_time;
+            j++;
+        }
+    }
+
+    for(int i=0; i<number_of_processes; i++)
+    {
+        for(int j=processes[i].arrival_time; j<processes[i].finish_time; j++)
+        {
+            if(processes[i].status[j]!='*')
+            {
+                processes[i].status[j]='.';
+            }
+        }
+    }
+
+    string name = "FB-1";
+    if ("trace"==mode)
+    {
+        trace(processes,name);
+    }
+    else
+    {
+        status(processes,name);
+    }
+}
+
+
+void FB_2i(process *processes)
+{
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> q; //pair of priority level and process index
+    unordered_map<int,int>remainingServiceTime; //map from process index to the remaining service time
+    int j=0;
+    if(processes[0].arrival_time==0)
+    {
+        q.push(make_pair(0,j));
+        remainingServiceTime[j]=processes[j].service_time;
+        j++;
+    }
+    for(int time =0; time<instants; time++)
+    {
+        if(!q.empty())
+        {
+            int priorityLevel = q.top().first;
+            int processIndex =q.top().second;
+            int arrivalTime = processes[processIndex].arrival_time;
+            int serviceTime = processes[processIndex].service_time;
+            q.pop();
+            while(j<number_of_processes && processes[j].arrival_time<=time+1)
+            {
+                q.push(make_pair(0,j));
+                remainingServiceTime[j]=processes[j].service_time;
+                j++;
+            }
+
+            int currentQuantum = pow(2,priorityLevel);
+            int temp = time;
+            while(currentQuantum && remainingServiceTime[processIndex])
+            {
+                currentQuantum--;
+                remainingServiceTime[processIndex]--;
+                processes[processIndex].status[temp++] = '*';
+            }
+
+            if(remainingServiceTime[processIndex]==0)
+            {
+                processes[processIndex].finish_time = temp;
+                processes[processIndex].turnaround = (processes[processIndex].finish_time - arrivalTime);
+            }
+            else
+            {
+                if(q.size()>=1)
+                    q.push(make_pair(priorityLevel+1,processIndex));
+                else
+                    q.push(make_pair(priorityLevel,processIndex));
+            }
+            time = temp-1;
+        }
+        while(j<number_of_processes && processes[j].arrival_time<=time+1)
+        {
+            q.push(make_pair(0,j));
+            remainingServiceTime[j]=processes[j].service_time;
+            j++;
+        }
+    }
+
+
+    for(int i=0; i<number_of_processes; i++)
+    {
+        for(int j=processes[i].arrival_time; j<processes[i].finish_time; j++)
+        {
+            if(processes[i].status[j]!='*')
+            {
+                processes[i].status[j]='.';
+            }
+        }
+    }
+
+    string name = "FB-2i";
     if ("trace"==mode)
     {
         trace(processes,name);
@@ -795,13 +990,13 @@ void schedule()
             HRRN(processes);
             break;
         case 6:
-            cout <<"fb1"<<endl;
+            FB_1(processes);
             break;
         case 7:
-            cout <<"fb2"<<endl;
+            FB_2i(processes);
             break;
         case 8:
-            aging(processes,qntm);
+            cout <<"aging"<<endl;
             break;
         }
 
