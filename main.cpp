@@ -128,6 +128,7 @@ void trace(process *processes,string str)
         {
             printf("%c|",processes[x].status[j]);
         }
+        printf(" ");
         if(x!=number_of_processes-1)
         {
             printf("\n");
