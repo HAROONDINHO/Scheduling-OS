@@ -110,7 +110,7 @@ void trace_init()
 
 void trace(process *processes,string str)
 {
-    printf("%-4s  ",str.c_str());
+    printf("%-6s",str.c_str());
     for(int i = 0; i<=instants; i++)
     {
         printf("%d ",i%10);
